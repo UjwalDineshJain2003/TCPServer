@@ -60,15 +60,15 @@ int main(int argc, char **argv)
     // creating a socket
     int serial_server_socket = socket(AF_INET, SOCK_STREAM, 0);
     // Server address creation for binding
-    struct sockaddr_in server_address;
-    server_address.sin_family = AF_INET;
+    struct sockaddr_in serial_server_address;
+    serial_server_address.sin_family = AF_INET;
     // binding to any available IP address in the machine
-    server_address.sin_addr.s_addr = INADDR_ANY;
+    serial_server_address.sin_addr.s_addr = INADDR_ANY;
     // converting (host) port number to network byte order, as network data is in big endian, while system data is in little endian format
-    server_address.sin_port = htons(portno);
+    serial_server_address.sin_port = htons(portno);
 
-    // binding the socket to a port
-    if (bind(serial_server_socket, (struct sockaddr *)&server_address, sizeof(server_address)) < 0)
+    // binding the socket to an address
+    if (bind(serial_server_socket, (struct sockaddr *)&serial_server_address, sizeof(serial_server_address)) < 0)
     {
         perror("Could not bind socket! Error!");
         exit(1);
@@ -100,43 +100,49 @@ void *client_handler(void *arg)
 
     while ((bytes_received = recv(client_socket, buffer, sizeof(buffer), 0)) > 0)
     {
+        // adding to indicate an end
         buffer[bytes_received] = '\0';
         std::string request(buffer);
 
-        // Split the request into individual commands
+        // splitting the request into individual commands
         std::istringstream iss(request);
         std::string command;
         while (std::getline(iss, command, '\n'))
         {
+            // initialising the response to be sent to the client
             std::string response;
 
             if (command == "READ")
             {
-                // Read the key
+                // Read the key (till the newline character)
                 std::getline(iss, command, '\n');
                 std::string key = command;
                 if (KV_DATASTORE.find(key) != KV_DATASTORE.end())
                 {
+                    // a key with the specified value was FOUND
                     response = KV_DATASTORE[key] + "\n";
                 }
                 else
                 {
+                    // the key doesnt exist
                     response = "NULL\n";
                 }
             }
             else if (command == "WRITE")
             {
-                // Read the key and value
+                // Read the key and value 
                 std::string key, value;
                 std::getline(iss, key, '\n');
                 std::getline(iss, value, '\n');
                 // getting rid of ':' delimiter
                 value.erase(0, 1);
+                // storing into the datastore
                 KV_DATASTORE[key] = value;
                 response = "FIN\n";
             }
             else if (command == "COUNT")
             {
+                // return the response with a newline character attached
                 response = std::to_string(KV_DATASTORE.size()) + "\n";
             }
             else if (command == "DELETE")
@@ -146,11 +152,13 @@ void *client_handler(void *arg)
                 std::string key = command;
                 if (KV_DATASTORE.find(key) != KV_DATASTORE.end())
                 {
+                    // key found, delete value
                     KV_DATASTORE.erase(key);
                     response = "FIN\n";
                 }
                 else
                 {
+                    // key not found
                     response = "NULL\n";
                 }
             }
@@ -162,6 +170,7 @@ void *client_handler(void *arg)
             }
             else
             {
+                // not a valid command typed
                 response = "INVALID COMMAND\n";
             }
 
