@@ -48,11 +48,11 @@ for ((i=1;i<=NUM_CLIENTS;i++))
 do
     if [ $PARALLEL -eq 0 ]
     then
-        ncat localhost $PORT < tests/inputs_generated/$i.txt &> tests/outputs/$i.txt
+        netcat localhost $PORT < tests/inputs_generated/$i.txt &> tests/outputs/$i.txt
     fi
     if [ $PARALLEL -eq 1 ]
     then
-        ncat localhost $PORT < tests/inputs_generated/$i.txt &> tests/outputs/$i.txt &
+        netcat localhost $PORT < tests/inputs_generated/$i.txt &> tests/outputs/$i.txt &
     fi
 done
 
