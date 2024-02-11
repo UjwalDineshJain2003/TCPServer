@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include <map>
 #include <sstream>
+#include <vector>
 // creating the key value store
 std::map<std::string, std::string> KV_DATASTORE;
 
